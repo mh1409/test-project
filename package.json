@@ -1,0 +1,38 @@
+{
+  "name": "souq-marketplace",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Production-grade multi-vendor marketplace platform (Arabic-first, RTL, multi-locale)",
+  "packageManager": "pnpm@10.33.0",
+  "engines": { "node": ">=22.0.0", "pnpm": ">=10.0.0" },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "pnpm --filter @souq/web test:e2e",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml,css}\"",
+    "db:generate": "pnpm --filter @souq/database generate",
+    "db:migrate": "pnpm --filter @souq/database migrate:deploy",
+    "db:migrate:dev": "pnpm --filter @souq/database migrate:dev",
+    "db:seed": "pnpm --filter @souq/database seed",
+    "db:seed:large": "pnpm --filter @souq/database seed:large",
+    "db:reset": "pnpm --filter @souq/database reset",
+    "db:studio": "pnpm --filter @souq/database studio",
+    "search:reindex": "pnpm --filter @souq/api search:reindex",
+    "audit:deps": "pnpm audit --prod --audit-level=high",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@souq/eslint-config": "workspace:*",
+    "@souq/tsconfig": "workspace:*",
+    "prettier": "3.9.6",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "turbo": "2.10.12",
+    "typescript": "5.9.3"
+  }
+}

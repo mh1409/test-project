@@ -1,0 +1,63 @@
+{
+  "name": "@souq/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./seed": {
+      "types": "./dist/seed/index.d.ts",
+      "default": "./dist/seed/index.js"
+    }
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "tsx src/seed/run.ts"
+  },
+  "scripts": {
+    "generate": "dotenv -e ../../.env -e .env -- prisma generate",
+    "migrate:dev": "dotenv -e ../../.env -e .env -- prisma migrate dev",
+    "migrate:deploy": "dotenv -e ../../.env -e .env -- prisma migrate deploy",
+    "migrate:status": "dotenv -e ../../.env -e .env -- prisma migrate status",
+    "reset": "dotenv -e ../../.env -e .env -- prisma migrate reset --force --skip-seed",
+    "seed": "dotenv -e ../../.env -e .env -- tsx src/seed/run.ts",
+    "seed:large": "dotenv -e ../../.env -e .env -- cross-env SEED_SCALE=large tsx src/seed/run.ts",
+    "studio": "dotenv -e ../../.env -e .env -- prisma studio",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "clean": "rm -rf dist .turbo coverage",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "@souq/config": "workspace:*",
+    "@souq/shared": "workspace:*",
+    "@souq/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "@souq/eslint-config": "workspace:*",
+    "@souq/tsconfig": "workspace:*",
+    "@types/node": "^22.20.1",
+    "eslint": "^9.39.5",
+    "prisma": "6.19.3",
+    "tsx": "^4.23.13",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.7",
+    "dotenv-cli": "^8.0.0",
+    "cross-env": "^7.0.3"
+  },
+  "files": [
+    "dist"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "extends": "@souq/tsconfig/nest.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist",
+    "types": ["node"],
+    "paths": { "@/*": ["src/*"] }
+  },
+  "include": ["src", "test"]
+}

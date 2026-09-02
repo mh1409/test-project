@@ -1,0 +1,185 @@
+name: souq
+
+x-app-env: &app-env
+  NODE_ENV: development
+  DATABASE_URL: postgresql://postgres:postgres@postgres:5432/marketplace?schema=public
+  REDIS_URL: redis://redis:6379
+  REDIS_REQUIRED: "true"
+  SEARCH_ENGINE: opensearch
+  OPENSEARCH_URL: http://opensearch:9200
+  EVENT_BUS: rabbitmq
+  RABBITMQ_URL: amqp://souq:souq@rabbitmq:5672
+  STORAGE_DRIVER: s3
+  S3_ENDPOINT: http://minio:9000
+  S3_PUBLIC_BASE_URL: http://localhost:9000/souq-public
+  S3_ACCESS_KEY: minioadmin
+  S3_SECRET_KEY: minioadmin
+  JWT_ACCESS_SECRET: dev-access-secret-change-me-please-0123456789abcdef
+  JWT_REFRESH_SECRET: dev-refresh-secret-change-me-please-0123456789abcdef
+  APP_URL: http://localhost:3000
+  ADMIN_URL: http://localhost:3002
+  API_URL: http://localhost:3001
+  CORS_ORIGINS: http://localhost:3000,http://localhost:3002
+  OTEL_ENABLED: "true"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: marketplace
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=all", "-c", "log_min_duration_statement=500"]
+    ports: ["5432:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d marketplace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    ports: ["6379:6379"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+      bootstrap.memory_lock: "true"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    ports: ["9200:9200"]
+    volumes: [opensearch-data:/usr/share/opensearch/data]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: souq
+      RABBITMQ_DEFAULT_PASS: souq
+    ports: ["5672:5672", "15672:15672"]
+    volumes: [rabbitmq-data:/var/lib/rabbitmq]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [minio-data:/data]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      minio: { condition: service_healthy }
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc mb -p local/souq-public && mc mb -p local/souq-private &&
+      mc anonymous set download local/souq-public &&
+      echo 'buckets ready'"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports: ["16686:16686", "4318:4318"]
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports: ["8025:8025", "1025:1025"]
+
+  # ── Application services (profile: app) ───────────────────────────────────
+  api:
+    profiles: [app]
+    build: { context: ., dockerfile: infra/docker/api.Dockerfile }
+    environment:
+      <<: *app-env
+      EMAIL_PROVIDER: smtp
+      SMTP_URL: smtp://mailpit:1025
+    ports: ["3001:3001"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      opensearch: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      minio-init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    profiles: [app]
+    build: { context: ., dockerfile: infra/docker/api.Dockerfile }
+    command: ["node", "dist/worker/main.js"]
+    environment:
+      <<: *app-env
+      OTEL_SERVICE_NAME: souq-worker
+      EMAIL_PROVIDER: smtp
+      SMTP_URL: smtp://mailpit:1025
+    depends_on:
+      api: { condition: service_healthy }
+
+  web:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: infra/docker/next.Dockerfile
+      args: { APP: web, PORT: "3000" }
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      API_INTERNAL_URL: http://api:3001
+      NEXT_PUBLIC_WS_URL: http://localhost:3001
+    ports: ["3000:3000"]
+    depends_on:
+      api: { condition: service_healthy }
+
+  admin:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: infra/docker/next.Dockerfile
+      args: { APP: admin, PORT: "3002" }
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      API_INTERNAL_URL: http://api:3001
+    ports: ["3002:3002"]
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  postgres-data:
+  redis-data:
+  opensearch-data:
+  rabbitmq-data:
+  minio-data:

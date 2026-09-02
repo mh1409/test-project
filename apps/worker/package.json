@@ -1,0 +1,15 @@
+{
+  "name": "@souq/worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Background job worker (BullMQ processors, outbox relay, schedulers). Shares domain code with @souq/api.",
+  "scripts": {
+    "dev": "pnpm --filter @souq/api dev:worker",
+    "build": "pnpm --filter @souq/api build",
+    "start": "node ../api/dist/worker/main.js",
+    "lint": "echo 'worker lint is covered by @souq/api'",
+    "typecheck": "echo 'worker typecheck is covered by @souq/api'",
+    "clean": "rm -rf .turbo"
+  },
+  "dependencies": { "@souq/api": "workspace:*" }
+}
