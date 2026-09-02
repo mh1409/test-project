@@ -1,0 +1,1 @@
+{ "extends": "@souq/tsconfig/react-library.json", "compilerOptions": { "noEmit": true, "types": ["node", "@testing-library/jest-dom"] }, "include": ["src", "vitest.setup.ts"] }

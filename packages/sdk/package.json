@@ -1,0 +1,37 @@
+{
+  "name": "@souq/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "clean": "rm -rf dist .turbo coverage",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@souq/shared": "workspace:*",
+    "@souq/types": "workspace:*",
+    "@souq/validation": "workspace:*"
+  },
+  "devDependencies": {
+    "@souq/eslint-config": "workspace:*",
+    "@souq/tsconfig": "workspace:*",
+    "@types/node": "^22.20.1",
+    "eslint": "^9.39.5",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.7"
+  },
+  "files": [
+    "dist"
+  ]
+}

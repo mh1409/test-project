@@ -1,0 +1,53 @@
+{
+  "name": "@souq/admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "clean": "rm -rf .next .turbo coverage playwright-report test-results"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@souq/i18n": "workspace:*",
+    "@souq/sdk": "workspace:*",
+    "@souq/shared": "workspace:*",
+    "@souq/types": "workspace:*",
+    "@souq/ui": "workspace:*",
+    "@souq/validation": "workspace:*",
+    "@tanstack/react-query": "^5.102.8",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.475.0",
+    "next": "15.5.25",
+    "next-intl": "^4.14.2",
+    "react": "19.0.8",
+    "react-dom": "19.0.8",
+    "react-hook-form": "^7.87.0",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@souq/eslint-config": "workspace:*",
+    "@souq/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^9.39.5",
+    "jsdom": "^26.1.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
